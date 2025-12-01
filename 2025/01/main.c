@@ -3,8 +3,14 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-uint turn_dial(int start_at, char dir, uint amount)
+typedef struct {
+    uint dial_at;
+    uint times_at_zero;
+} DialResult;
+
+DialResult turn_dial(int dial_at, char dir, uint amount)
 {
+    uint times_at_zero = 0;
     int mult = 1;
     if (dir == 'R' || dir == 'r')
     {
@@ -12,17 +18,25 @@ uint turn_dial(int start_at, char dir, uint amount)
     }
     for (size_t i = 1; i <= amount; i++)
     {
-        start_at += (1 * mult);
-        if (start_at < 0)
+        dial_at += (1 * mult);
+        if (dial_at < 0)
         {
-            start_at = 99;
+            dial_at = 99;
         }
-        else if (start_at > 99)
+        else if (dial_at > 99)
         {
-            start_at = 0;
+            dial_at = 0;
+        }
+        if (dial_at == 0)
+        {
+            times_at_zero++;
         }
     }
-    return (uint)start_at;
+    DialResult r = {
+        .dial_at = (uint)dial_at,
+        .times_at_zero = times_at_zero,
+    };
+    return r;
 }
 
 int main()
@@ -40,11 +54,9 @@ int main()
     {
         char dir = line[0];
         uint amount = strtoul(&line[1], NULL, 10);
-        dial_at = turn_dial(dial_at, dir, amount);
-        if (dial_at == 0)
-        {
-            times_at_zero++;
-        }
+        DialResult r = turn_dial(dial_at, dir, amount);
+        times_at_zero += r.times_at_zero;
+        dial_at = r.dial_at;
     }
     fclose(f);
     printf("%d", times_at_zero);
