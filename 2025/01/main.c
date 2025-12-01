@@ -4,36 +4,47 @@
 #include <sys/types.h>
 
 typedef struct {
-    uint dial_at;
+    int dial_at;
     uint times_at_zero;
 } DialResult;
 
 DialResult turn_dial(int dial_at, char dir, uint amount)
 {
+    int mult = (dir == 'R' || dir == 'r') ? -1 : 1;
+    int offset = mult * (int)amount;
+    int pos = dial_at + offset;
+    pos %= 100;
+    if (pos < 0)
+    {
+        pos += 100;
+    }
+
     uint times_at_zero = 0;
-    int mult = 1;
-    if (dir == 'R' || dir == 'r')
+    if (amount > 0)
     {
-        mult = -1;
+        if (mult > 0)
+        {
+            times_at_zero = (dial_at + amount) / 100;
+        }
+        else
+        {
+            if (dial_at == 0)
+            {
+                times_at_zero = amount / 100;
+            }
+            else if (amount < dial_at)
+            {
+                times_at_zero = 0;
+            }
+            else
+            {
+                times_at_zero = 1 + (amount - dial_at) / 100;
+            }
+        }
     }
-    for (size_t i = 1; i <= amount; i++)
-    {
-        dial_at += (1 * mult);
-        if (dial_at < 0)
-        {
-            dial_at = 99;
-        }
-        else if (dial_at > 99)
-        {
-            dial_at = 0;
-        }
-        if (dial_at == 0)
-        {
-            times_at_zero++;
-        }
-    }
+
     DialResult r = {
-        .dial_at = (uint)dial_at,
+        .dial_at = pos,
         .times_at_zero = times_at_zero,
     };
     return r;
@@ -48,7 +59,7 @@ int main()
         return -1;
     }
     uint times_at_zero = 0;
-    uint dial_at = 50;
+    int dial_at = 50;
     char line[4096];
     while (fgets(line, sizeof(line), f))
     {
