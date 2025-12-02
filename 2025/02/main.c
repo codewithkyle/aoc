@@ -6,6 +6,31 @@
 #include <sys/types.h>
 #include <inttypes.h>
 
+uint repeated_substring(const char *buffer)
+{
+    size_t n = strlen(buffer);
+
+    for (size_t len = 1; len <= n / 2; len++)
+    {
+        if (n % len != 0) continue;
+
+        uint repeating = 1;
+        char pattern[32];
+        memcpy(pattern, buffer, len);
+        pattern[len] = '\0';
+        for (size_t pos = 0; pos < n; pos += len)
+        {
+            if (strncmp(buffer + pos, pattern, len) != 0)
+            {
+                repeating = 0;
+                break;
+            }
+        }
+        if (repeating) return 1;
+    }
+    return 0;
+}
+
 unsigned long long identify_repeating(uint64_t start, uint64_t end)
 {
     unsigned long long invalid_id_sum = 0;
@@ -14,21 +39,10 @@ unsigned long long identify_repeating(uint64_t start, uint64_t end)
     {
         char buffer[32];
         snprintf(buffer, sizeof(buffer), "%" PRIu64, i);
-        size_t len = strlen(buffer);
-        char pattern[32];
-        pattern[0] = '\0';
-        char out[32];
-        for (uint j = 0; j < len && j < sizeof(pattern) - 1; j++)
-        {
-            strcpy(out, buffer + j);
-            if (strcmp(pattern, out) == 0)
-            {
-                invalid_id_sum += i;
-                break;
-            }
 
-            pattern[j] = buffer[j];
-            pattern[j+1] = '\0';
+        if (repeated_substring(buffer))
+        {
+            invalid_id_sum += i;
         }
     }
 
