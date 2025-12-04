@@ -5,6 +5,8 @@
 #include <string.h>
 #include <inttypes.h>
 
+enum { DIGITS = 12 };
+
 int main()
 {
     FILE* file = fopen("data.txt", "r");
@@ -25,12 +27,12 @@ int main()
             len--;
         }
 
-        char values[13];
+        char values[DIGITS+1];
         memset(values, '0', sizeof(values)-1);
-        values[12] = '\0';
+        values[DIGITS] = '\0';
 
         size_t left_idx = 0;
-        size_t offset = 11;
+        size_t offset = DIGITS-1;
         for (size_t i = 0; i < len - offset; i++)
         {
             int value = line[i] - 0x30;
@@ -38,10 +40,11 @@ int main()
             {
                 values[0] = line[i];
                 left_idx = i;
+                if (value == 9) break;
             }
         }
 
-        for (size_t idx = 1; idx < 12 && offset > 0; idx++)
+        for (size_t idx = 1; idx < DIGITS && offset > 0; idx++)
         {
             offset--;
             for (size_t i = left_idx+1; i < len - offset; i++)
@@ -51,6 +54,7 @@ int main()
                 {
                     values[idx] = line[i];
                     left_idx = i;
+                    if (value == 9) break;
                 }
             }
         }
@@ -58,6 +62,7 @@ int main()
         joltage_sum += strtoull(values, NULL, 10);
     }
     printf("%" PRIu64 "\n", joltage_sum);
+    fclose(file);
 
     return 0;
 }
