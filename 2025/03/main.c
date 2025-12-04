@@ -33,6 +33,10 @@ int main()
                 left_idx = i;
                 left = value;
             }
+            if (value == 9)
+            {
+                break;
+            }
         }
 
         for (int i = left_idx+1; i < len; i++)
@@ -41,6 +45,10 @@ int main()
             if (value > right)
             {
                 right = value;
+            }
+            if (value == 9)
+            {
+                break;
             }
         }
 
