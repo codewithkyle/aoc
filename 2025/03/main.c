@@ -7,6 +7,50 @@
 
 enum { DIGITS = 12 };
 
+// NOTE: rewrote after learning about monotonic stacks
+void monotonic_stack(const char *line, size_t len, size_t K, char *out)
+{
+    size_t max_drops = len - K; // how many digits we can skip/drop
+    char stack[4096];
+    size_t top = 0; // stack size
+
+    for (size_t i = 0; i < len; i++)
+    {
+        // for each digit we decide:
+        // should it replace some weaker digit we already picked
+        // or should it be appended
+        // or should it be thrown away
+        char d = line[i];
+
+        // if the current digit is bigger than the last chosen digit
+        // and we can still drop digits then drop the weaker one
+        while (
+            top > 0 && // the stack isn't empty
+            d > stack[top-1] && // the digit is stronger
+            max_drops > 0 // we can still throw away digits
+        )
+        {
+            top--;
+            max_drops--;
+        }
+
+        if (top < K) // append if we still need digits
+        {
+            stack[top++] = d;
+        }
+        else
+        {
+            max_drops--; // full up, drop it
+        }
+    }
+
+    for (size_t i = 0; i < K; i++)
+    {
+        out[i] = stack[i];
+    }
+    out[K] = '\0';
+}
+
 int main()
 {
     FILE* file = fopen("data.txt", "r");
@@ -27,39 +71,9 @@ int main()
             len--;
         }
 
-        char values[DIGITS+1];
-        memset(values, '0', sizeof(values)-1);
-        values[DIGITS] = '\0';
-
-        size_t left_idx = 0;
-        size_t offset = DIGITS-1;
-        for (size_t i = 0; i < len - offset; i++)
-        {
-            int value = line[i] - 0x30;
-            if (value > values[0] - 0x30)
-            {
-                values[0] = line[i];
-                left_idx = i;
-                if (value == 9) break;
-            }
-        }
-
-        for (size_t idx = 1; idx < DIGITS && offset > 0; idx++)
-        {
-            offset--;
-            for (size_t i = left_idx+1; i < len - offset; i++)
-            {
-                int value = line[i] - 0x30;
-                if (value > values[idx] - 0x30)
-                {
-                    values[idx] = line[i];
-                    left_idx = i;
-                    if (value == 9) break;
-                }
-            }
-        }
-
-        joltage_sum += strtoull(values, NULL, 10);
+        char out[DIGITS+1];
+        monotonic_stack(line, len, DIGITS, out);
+        joltage_sum += strtoull(out, NULL, 10);
     }
     printf("%" PRIu64 "\n", joltage_sum);
     fclose(file);
