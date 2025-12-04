@@ -1,6 +1,9 @@
 #include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 int main()
 {
@@ -11,38 +14,50 @@ int main()
         return -1;
     }
 
-    int joltage_sum = 0;
+    uint64_t joltage_sum = 0;
     char line[4096];
     while (fgets(line, sizeof(line), file))
     {
-        int len = strlen(line);
+        size_t len = strlen(line);
         if (len > 0 && line[len-1] == '\n')
         {
             line[len-1] = '\0';
             len--;
         }
 
-        int left = 0;
-        int right = 0;
-        int left_idx = 0;
-        for (int i = 0; i < len-1; i++)
+        char values[13];
+        memset(values, '0', sizeof(values)-1);
+        values[12] = '\0';
+
+        size_t left_idx = 0;
+        size_t offset = 11;
+        for (size_t i = 0; i < len - offset; i++)
         {
-            int l_value = line[i] - 0x30;
-            int r_value = line[i+1] - 0x30;
-            if (l_value > left)
+            int value = line[i] - 0x30;
+            if (value > values[0] - 0x30)
             {
-                left = l_value;
-                right = 0;
-            }
-            if (r_value > right)
-            {
-                right = r_value;
+                values[0] = line[i];
+                left_idx = i;
             }
         }
 
-        joltage_sum += left * 10 + right;
+        for (size_t idx = 1; idx < 12 && offset > 0; idx++)
+        {
+            offset--;
+            for (size_t i = left_idx+1; i < len - offset; i++)
+            {
+                int value = line[i] - 0x30;
+                if (value > values[idx] - 0x30)
+                {
+                    values[idx] = line[i];
+                    left_idx = i;
+                }
+            }
+        }
+
+        joltage_sum += strtoull(values, NULL, 10);
     }
-    printf("%i\n", joltage_sum);
+    printf("%" PRIu64 "\n", joltage_sum);
 
     return 0;
 }
