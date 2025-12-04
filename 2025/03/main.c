@@ -27,28 +27,16 @@ int main()
         int left_idx = 0;
         for (int i = 0; i < len-1; i++)
         {
-            int value = line[i] - 0x30;
-            if (value > left)
+            int l_value = line[i] - 0x30;
+            int r_value = line[i+1] - 0x30;
+            if (l_value > left)
             {
-                left_idx = i;
-                left = value;
+                left = l_value;
+                right = 0;
             }
-            if (value == 9)
+            if (r_value > right)
             {
-                break;
-            }
-        }
-
-        for (int i = left_idx+1; i < len; i++)
-        {
-            int value = line[i] - 0x30;
-            if (value > right)
-            {
-                right = value;
-            }
-            if (value == 9)
-            {
-                break;
+                right = r_value;
             }
         }
 
