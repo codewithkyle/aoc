@@ -51,15 +51,8 @@ void monotonic_stack(const char *line, size_t len, size_t K, char *out)
     out[K] = '\0';
 }
 
-int main()
+uint64_t part_2(FILE *file)
 {
-    FILE* file = fopen("data.txt", "r");
-    if (!file)
-    {
-        perror("failed to open file");
-        return -1;
-    }
-
     uint64_t joltage_sum = 0;
     char line[4096];
     while (fgets(line, sizeof(line), file))
@@ -75,8 +68,60 @@ int main()
         monotonic_stack(line, len, DIGITS, out);
         joltage_sum += strtoull(out, NULL, 10);
     }
-    printf("%" PRIu64 "\n", joltage_sum);
+    return joltage_sum;
+}
+
+int part_1(FILE *file)
+{
+    int joltage_sum = 0;
+    char line[4096];
+    while (fgets(line, sizeof(line), file))
+    {
+        int len = strlen(line);
+        if (len > 0 && line[len-1] == '\n')
+        {
+            line[len-1] = '\0';
+            len--;
+        }
+
+        int left = 0;
+        int right = 0;
+        int left_idx = 0;
+        for (int i = 0; i < len-1; i++)
+        {
+            int l_value = line[i] - 0x30;
+            int r_value = line[i+1] - 0x30;
+            if (l_value > left)
+            {
+                left = l_value;
+                right = 0;
+            }
+            if (r_value > right)
+            {
+                right = r_value;
+            }
+        }
+
+        joltage_sum += left * 10 + right;
+    }
+    return joltage_sum;
+}
+
+int main()
+{
+    FILE* file = fopen("data.txt", "r");
+    if (!file)
+    {
+        perror("failed to open file");
+        return -1;
+    }
+    int part_1_sum = part_1(file);
+    rewind(file);
+    uint64_t part_2_sum = part_2(file);
     fclose(file);
+
+    printf("Part 1: %u\n", part_1_sum);
+    printf("Part 2: %" PRIu64 "\n", part_2_sum);
 
     return 0;
 }
