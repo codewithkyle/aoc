@@ -80,7 +80,7 @@ ssize_t binary_search(Ranges *ranges, uint64_t value)
 
     while (low_idx <= high_idx)
     {
-        size_t mid_idx = low_idx + (high_idx - low_idx) * 0.5;
+        size_t mid_idx = low_idx + (high_idx - low_idx) / 2;
         const Range *r = &ranges->range[mid_idx];
 
         if (value < r->start)
