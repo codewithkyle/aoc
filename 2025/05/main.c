@@ -106,6 +106,18 @@ uint64_t part_1(Ranges *ranges, uint64_t item_id)
     return binary_search(ranges, item_id) >= 0;
 }
 
+uint64_t part_2(Ranges *ranges)
+{
+    uint64_t sum = 0;
+    for (size_t i = 0; i < ranges->length; i++)
+    {
+        Range *r = &ranges->range[i];
+        uint64_t diff = (r->end - r->start) + 1;
+        sum += diff;
+    }
+    return sum;
+}
+
 int main()
 {
     FILE *f = fopen("data.txt", "r");
@@ -160,6 +172,7 @@ int main()
     }
 
     printf("Part 1: %" PRIu64 "\n", part_1_sum);
+    printf("Part 2: %" PRIu64 "\n", part_2(&ranges));
 
     return 0;
 }
