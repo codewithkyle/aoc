@@ -2,6 +2,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+int calc_adj_sum(int *grid, int cols, int rows, size_t idx, int x, int y)
+{
+    int adj_sum = 0;
+
+    if (x > 0 && grid[y * cols + (x-1)]) adj_sum++;
+    if (x < cols-1 && grid[y * cols + (x+1)]) adj_sum++;
+
+    if (y > 0 && grid[(y-1) * cols + x]) adj_sum++;
+    if (y < rows-1 && grid[(y+1) * cols + x]) adj_sum++;
+
+    if (y > 0 && x > 0 && grid[(y-1) * cols + (x-1)]) adj_sum++;
+    if (y < rows-1 && x < cols-1 && grid[(y+1) * cols + (x+1)]) adj_sum++;
+
+    if (y > 0 && x < cols-1 && grid[(y-1) * cols + (x+1)]) adj_sum++;
+    if (y < rows-1 && x > 0 && grid[(y+1) * cols + (x-1)]) adj_sum++;
+
+    return adj_sum;
+}
+
 int part_2(int *grid, int rows, int cols)
 {
     int total = 0;
@@ -14,20 +33,7 @@ int part_2(int *grid, int rows, int cols)
             {
                 size_t idx = y * cols + x;
                 if (grid[idx] == 0) continue;
-                int adj_sum = 0;
-                if (x > 0 && grid[y * cols + (x-1)]) adj_sum++;
-                if (x < cols-1 && grid[y * cols + (x+1)]) adj_sum++;
-
-                if (y > 0 && grid[(y-1) * cols + x]) adj_sum++;
-                if (y < rows-1 && grid[(y+1) * cols + x]) adj_sum++;
-
-                if (y > 0 && x > 0 && grid[(y-1) * cols + (x-1)]) adj_sum++;
-                if (y < rows-1 && x < cols-1 && grid[(y+1) * cols + (x+1)]) adj_sum++;
-
-                if (y > 0 && x < cols-1 && grid[(y-1) * cols + (x+1)]) adj_sum++;
-                if (y < rows-1 && x > 0 && grid[(y+1) * cols + (x-1)]) adj_sum++;
-
-                if (adj_sum < 4) 
+                if (calc_adj_sum(grid, cols, rows, idx, x, y) < 4)
                 {
                     grid[idx] = 0;
                     sum++;
@@ -47,21 +53,9 @@ int part_1(int *grid, int rows, int cols)
     {
         for (int x = 0; x < cols; x++)
         {
-            if (grid[y * cols + x] == 0) continue;
-            int adj_sum = 0;
-            if (x > 0 && grid[y * cols + (x-1)]) adj_sum++;
-            if (x < cols-1 && grid[y * cols + (x+1)]) adj_sum++;
-
-            if (y > 0 && grid[(y-1) * cols + x]) adj_sum++;
-            if (y < rows-1 && grid[(y+1) * cols + x]) adj_sum++;
-
-            if (y > 0 && x > 0 && grid[(y-1) * cols + (x-1)]) adj_sum++;
-            if (y < rows-1 && x < cols-1 && grid[(y+1) * cols + (x+1)]) adj_sum++;
-
-            if (y > 0 && x < cols-1 && grid[(y-1) * cols + (x+1)]) adj_sum++;
-            if (y < rows-1 && x > 0 && grid[(y+1) * cols + (x-1)]) adj_sum++;
-
-            if (adj_sum < 4) sum++;
+            size_t idx = y * cols + x;
+            if (grid[idx] == 0) continue;
+            if (calc_adj_sum(grid, cols, rows, idx, x, y) < 4) sum++;
         }
     }
     return sum;
@@ -88,8 +82,16 @@ int main()
         rows++;
     }
     rewind(f);
+
+    // NOTE: I could have used a fixed 2D array given the fixed
+    // input size but I wanted to try calloc since I'm learning
     int *grid = calloc(cols * rows, sizeof(int));
     int y = 0;
+
+    // NOTE: initialy I misread the instructions and thought I had to
+    // check perpendicular spaces (4 per direction) so I planned
+    // to use a sliding window to sum the 0/1 values. Turns out it was
+    // way easier than that. Reading is hard.
     while(fgets(line, sizeof(line), f))
     {
         for (size_t x = 0; x < cols; x++)
