@@ -12,8 +12,8 @@ typedef struct {
 } Range;
 
 typedef struct {
-    uint64_t capacity;
-    uint64_t length;
+    size_t capacity;
+    size_t length;
     Range *range;
 } Ranges;
 
@@ -21,9 +21,10 @@ void add_range(Ranges *ranges, uint64_t start, uint64_t end)
 {
     if (ranges->length == ranges->capacity)
     {
-        ranges->capacity *= 2;
+        size_t new_cap  = ranges->capacity ? ranges->capacity * 2 : 16;
         // NOTE: realloc could fail but I'm ignoring that for AoC
-        ranges->range = realloc(ranges->range, ranges->capacity * sizeof(Range));
+        ranges->range = realloc(ranges->range, new_cap * sizeof(Range));
+        ranges->capacity = new_cap;
     }
 
     ranges->range[ranges->length++] = (Range){ start, end };
@@ -36,6 +37,8 @@ int compar(const void *a, const void *b)
 
     if (ra->start < rb->start) return -1;
     if (ra->start > rb->start) return 1;
+    if (ra->end   < rb->end)   return -1;
+    if (ra->end   > rb->end)   return 1;
     return 0;
 }
 
@@ -101,7 +104,7 @@ ssize_t binary_search(Ranges *ranges, uint64_t value)
     return -1;
 }
 
-uint64_t part_1(Ranges *ranges, uint64_t item_id)
+uint part_1(Ranges *ranges, uint64_t item_id)
 {
     return binary_search(ranges, item_id) >= 0;
 }
@@ -132,7 +135,7 @@ int main()
     ranges.length = 0;
     ranges.range  = malloc(ranges.capacity * sizeof(Range));
 
-    u_int8_t finished_loading = 0;
+    uint8_t finished_loading = 0;
     char line[4096];
     uint64_t part_1_sum = 0;
     while (fgets(line, sizeof(line), f))
@@ -161,7 +164,7 @@ int main()
             continue;
         }
 
-        if (line[len-1] == '\n')
+        if (len > 0 && line[len-1] == '\n')
         {
             line[len-1] = '\0';
             len--;
@@ -173,6 +176,9 @@ int main()
 
     printf("Part 1: %" PRIu64 "\n", part_1_sum);
     printf("Part 2: %" PRIu64 "\n", part_2(&ranges));
+
+    free(ranges.range);
+    fclose(f);
 
     return 0;
 }
