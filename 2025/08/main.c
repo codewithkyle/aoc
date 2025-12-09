@@ -112,24 +112,8 @@ int compar(const void *a, const void *b)
     return 0;
 }
 
-uint64_t part_1(Circut *circuts, Node *nodes)
+uint64_t part_1(Circut *circuts, Node *nodes, Edge *edges, size_t edge_count)
 {
-    size_t edge_count = 0;
-    Edge *edges = malloc(MAX_NODES * (MAX_NODES - 1) / 2 * sizeof *edges);
-    for (size_t i = 0; i < MAX_NODES; i++)
-    {
-        for (size_t j = i + 1; j < MAX_NODES; j++)
-        {
-            edges[edge_count++] = (Edge){
-                .a = i,
-                .b = j,
-                .dist2 = dist(&nodes[i], &nodes[j]),
-            };
-        }
-    }
-
-    qsort(edges, edge_count, sizeof *edges, edge_compar);
-
     size_t edges_used = 0;
     for (size_t e = 0; e < edge_count && edges_used < CONN_TO_MAKE; ++e)
     {
@@ -181,8 +165,71 @@ uint64_t part_1(Circut *circuts, Node *nodes)
     }
 
     qsort(circuts, MAX_CIRCUTS, sizeof *circuts, compar);
-    free(edges);
     return circuts[0].len * circuts[1].len * circuts[2].len;
+}
+
+uint64_t part_2(Circut *circuts, Node *nodes, Edge *edges, size_t edge_count)
+{
+    size_t merge_count = 0;
+    uint64_t part_2_answer = 0;
+
+    for (size_t e = 0; e < edge_count; ++e)
+    {
+        size_t i = edges[e].a;
+        size_t j = edges[e].b;
+
+        Node *a = &nodes[i];
+        Node *b = &nodes[j];
+
+        if (a->circut_idx != -1 && a->circut_idx == b->circut_idx)
+        {
+            continue;
+        }
+        else if (a->circut_idx != -1 && b->circut_idx == -1)
+        {
+            Circut *circut = &circuts[a->circut_idx];
+            circut_add_node(circut, j);
+            b->circut_idx = a->circut_idx;
+            merge_count++;
+        }
+        else if (a->circut_idx == -1 && b->circut_idx != -1)
+        {
+            Circut *circut = &circuts[b->circut_idx];
+            circut_add_node(circut, i);
+            a->circut_idx = b->circut_idx;
+            merge_count++;
+        }
+        else if (a->circut_idx != -1 && b->circut_idx != -1)
+        {
+            Circut *keep = &circuts[a->circut_idx];
+            Circut *kill = &circuts[b->circut_idx];
+            circut_merge(keep, kill);
+            circut_sync_nodes(keep, a->circut_idx, nodes);
+            merge_count++;
+        }
+        else
+        {
+            size_t circut_idx = create_circut(circuts);
+            if (circut_idx == SIZE_MAX)
+            {
+                perror("no empty circuits");
+                exit(1);
+            }
+            Circut *circut = &circuts[circut_idx];
+            circut_add_node(circut, i);
+            circut_add_node(circut, j);
+            a->circut_idx = (int)circut_idx;
+            b->circut_idx = (int)circut_idx;
+            merge_count++;
+        }
+
+        if (merge_count == MAX_NODES-1)
+        {
+            part_2_answer = (uint64_t)nodes[i].x * (uint64_t)nodes[j].x;
+            break;
+        }
+    }
+    return part_2_answer;
 }
 
 int main()
@@ -238,10 +285,35 @@ int main()
         };
     }
 
-    printf("Part 1: %" PRIu64 "\n", part_1(circuts, nodes));
+    size_t edge_count = 0;
+    Edge *edges = malloc(MAX_NODES * (MAX_NODES - 1) / 2 * sizeof *edges);
+    for (size_t i = 0; i < MAX_NODES; i++)
+    {
+        for (size_t j = i + 1; j < MAX_NODES; j++)
+        {
+            edges[edge_count++] = (Edge){
+                .a = i,
+                .b = j,
+                .dist2 = dist(&nodes[i], &nodes[j]),
+            };
+        }
+    }
+    qsort(edges, edge_count, sizeof *edges, edge_compar);
+
+    printf("Part 1: %" PRIu64 "\n", part_1(circuts, nodes, edges, edge_count));
+
+    // NOTE: reset for part 2
+    for (size_t i = 0; i < MAX_NODES; i++) {
+        nodes[i].circut_idx = -1;
+    }
+    for (size_t i = 0; i < MAX_CIRCUTS; i++) {
+        circuts[i].len = 0;
+    }
+    printf("Part 2: %" PRIu64 "\n", part_2(circuts, nodes, edges, edge_count));
 
     free(circuts);
     free(nodes);
+    free(edges);
     fclose(f);
     return 0;
 }
